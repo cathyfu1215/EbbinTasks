@@ -1,4 +1,3 @@
-
 # EbbinTasks: Intelligent Spaced Repetition Task Scheduler
 
 **EbbinTasks** is a smart productivity app that helps users break large goals into smaller, reviewable tasks—and schedules them intelligently based on the Ebbinghaus forgetting curve.
@@ -10,6 +9,7 @@ It combines human input (task priority, mastery level, desired intensity) with a
 ## 🔧 Key Features
 
 - **Task Chunking**: Break any large goal (e.g. "Leetcode Practice") into smaller chunks (e.g. "Backtracking Basics")
+- **Multiple Task Streams**: Each user can maintain multiple parent tasks (e.g. Leetcode, Projects, Interviews)
 - **Adaptive Scheduling**: Uses the Ebbinghaus forgetting curve to schedule when to review each chunk
 - **Dynamic Priority System**: Recalculates urgency based on importance × forgetting decay
 - **User Flexibility**:
@@ -31,8 +31,17 @@ Each task chunk is assigned a dynamic `priority_score`, calculated as:
 priority = user_importance × e^(-decay_rate × days_since_last_review)
 ```
 
+Or tracked explicitly as:
+
+```json
+{
+  "priority": retention_score × user_importance
+}
+```
+
 - `user_importance`: (0.0–1.0), set by user
-- `decay_rate`: affected by mastery level and task difficulty
+- `retention_score`: decays over time based on Ebbinghaus curve
+- `review_count`: helps calibrate forgetting curve
 
 ### 2. **Global Task Heap**
 We use a heap-like priority queue to:
@@ -52,34 +61,36 @@ Priority is recalculated whenever:
 
 ---
 
-## 🗃️ Suggested PostgreSQL Schema
+## 🗃️ Updated PostgreSQL Schema
 
 ### `tasks`
 ```sql
-id SERIAL PRIMARY KEY,
-parent_task TEXT,
+id UUID PRIMARY KEY,
+user_id UUID,
+title TEXT NOT NULL,
+created_at TIMESTAMP DEFAULT NOW()
+```
+
+### `task_chunks`
+```sql
+id UUID PRIMARY KEY,
+parent_task UUID REFERENCES tasks(id),
 title TEXT,
 created_at TIMESTAMP,
-importance FLOAT,         -- user-assigned
+last_reviewed TIMESTAMP,
+review_count INTEGER DEFAULT 0,
+retention_score FLOAT DEFAULT 1.0,
+user_importance FLOAT CHECK (user_importance BETWEEN 0 AND 1),
+priority FLOAT GENERATED ALWAYS AS (retention_score * user_importance) STORED,
 order_within_task INTEGER,
+is_review BOOLEAN DEFAULT TRUE,
 is_mastered BOOLEAN DEFAULT FALSE
 ```
 
-### `reviews`
+### `daily_schedule`
 ```sql
-id SERIAL PRIMARY KEY,
-task_id INTEGER REFERENCES tasks(id),
-reviewed_at TIMESTAMP,
-review_count INTEGER,
-last_retention_score FLOAT
-```
-
-### `scheduler_queue`
-```sql
-task_id INTEGER REFERENCES tasks(id),
+task_id UUID REFERENCES task_chunks(id),
 scheduled_for DATE,
-priority FLOAT,
-is_review BOOLEAN,
 is_completed BOOLEAN DEFAULT FALSE
 ```
 
@@ -97,6 +108,7 @@ User Cathy wants to master algorithm topics:
 5. Cathy reviews daily and marks progress
 6. A week later, she adds: "Arrays Practice"
 7. The system rebalances the upcoming schedule and adapts priority queue
+8. Cathy also has other tasks like "Build Side Projects" and "Mock Interviews" under her profile
 
 ---
 
@@ -116,5 +128,5 @@ User Cathy wants to master algorithm topics:
 
 ---
 
-## 👋 Built With Love by Cathy Fu & Little Bot
+## 👋 Built With Love by Cathy Fu & Little Bot since April 16,2025
 
