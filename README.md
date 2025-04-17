@@ -60,13 +60,31 @@ npm install
 
 3. Create a `.env` file based on the `.env.example` file and update the database connection string.
 
+```
+# .env.example
+# Backend Environment Variables (.env.example)
+# Copy this file to backend/.env and update the values
+
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database Configuration
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/ebbintasks
+
+# JWT Secret (for future authentication)
+JWT_SECRET=your_jwt_secret_here
+```
+
+
+
 4. Start the backend server:
 
 ```bash
 npm run dev
 ```
 
-The server will start on http://localhost:5000.
+The server will start on http://localhost:5200.
 
 ### Frontend Setup
 
