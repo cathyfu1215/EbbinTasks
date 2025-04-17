@@ -1,132 +1,141 @@
-# EbbinTasks: Intelligent Spaced Repetition Task Scheduler
+# EbbinTasks
 
-**EbbinTasks** is a smart productivity app that helps users break large goals into smaller, reviewable tasks—and schedules them intelligently based on the Ebbinghaus forgetting curve.
+EbbinTasks is a spaced repetition task management system that helps you retain knowledge more effectively using the Ebbinghaus forgetting curve principles.
 
-It combines human input (task priority, mastery level, desired intensity) with algorithmic planning (spaced repetition, adaptive scheduling) to ensure meaningful progress with minimal burnout.
+## Features
 
----
+- Create tasks and break them down into smaller, manageable chunks
+- Set importance for each task chunk to prioritize your learning
+- Automatically schedule task chunks for review based on priority
+- Track your progress with a daily review schedule
+- Mark items as mastered when you've fully learned them
 
-## 🔧 Key Features
+## Tech Stack
 
-- **Task Chunking**: Break any large goal (e.g. "Leetcode Practice") into smaller chunks (e.g. "Backtracking Basics")
-- **Multiple Task Streams**: Each user can maintain multiple parent tasks (e.g. Leetcode, Projects, Interviews)
-- **Adaptive Scheduling**: Uses the Ebbinghaus forgetting curve to schedule when to review each chunk
-- **Dynamic Priority System**: Recalculates urgency based on importance × forgetting decay
-- **User Flexibility**:
-  - Mark tasks as "Mastered"
-  - Adjust importance
-  - Add/snooze/reorder chunks
-  - Choose intensity mode (e.g. cram to finish quickly vs spaced mastery)
-- **Daily Review Queue**: Each day presents a mix of new tasks and reviews
-- **Retention Graph**: Visualizes memory retention and shows when tasks are at risk of being forgotten
+### Backend
+- Node.js with Express
+- PostgreSQL database
+- RESTful API architecture
 
----
+### Frontend
+- React
+- Tailwind CSS for styling
+- React Router for navigation
+- Axios for API requests
 
-## 🧠 Core Logic & Data Structures
+## Getting Started
 
-### 1. **Priority Score**
-Each task chunk is assigned a dynamic `priority_score`, calculated as:
+### Prerequisites
 
-```python
-priority = user_importance × e^(-decay_rate × days_since_last_review)
+- Node.js (v14 or later)
+- PostgreSQL (v12 or later)
+
+### Database Setup
+
+1. Create a PostgreSQL database:
+
+```bash
+createdb ebbintasks
 ```
 
-Or tracked explicitly as:
+2. Run the database initialization script:
 
-```json
-{
-  "priority": retention_score × user_importance
-}
+```bash
+psql -d ebbintasks -f backend/src/config/init.sql
 ```
 
-- `user_importance`: (0.0–1.0), set by user
-- `retention_score`: decays over time based on Ebbinghaus curve
-- `review_count`: helps calibrate forgetting curve
+### Backend Setup
 
-### 2. **Global Task Heap**
-We use a heap-like priority queue to:
-- Continuously maintain urgency-ranked chunks
-- Pop the top N tasks into the daily review plan
+1. Navigate to the backend directory:
 
-Priority is recalculated whenever:
-- A task is completed
-- A new chunk is added
-- Importance is updated
-- Mastery is achieved (may be removed from heap)
-
-### 3. **Adaptability Modes**
-- **Spaced Repetition Mode**: Optimal memory retention with progressive review spacing
-- **Cram Mode**: Compresses future reviews and prioritizes new content
-- **Backlog Handling**: Delayed tasks are rescheduled based on current urgency
-
----
-
-## 🗃️ Updated PostgreSQL Schema
-
-### `tasks`
-```sql
-id UUID PRIMARY KEY,
-user_id UUID,
-title TEXT NOT NULL,
-created_at TIMESTAMP DEFAULT NOW()
+```bash
+cd backend
 ```
 
-### `task_chunks`
-```sql
-id UUID PRIMARY KEY,
-parent_task UUID REFERENCES tasks(id),
-title TEXT,
-created_at TIMESTAMP,
-last_reviewed TIMESTAMP,
-review_count INTEGER DEFAULT 0,
-retention_score FLOAT DEFAULT 1.0,
-user_importance FLOAT CHECK (user_importance BETWEEN 0 AND 1),
-priority FLOAT GENERATED ALWAYS AS (retention_score * user_importance) STORED,
-order_within_task INTEGER,
-is_review BOOLEAN DEFAULT TRUE,
-is_mastered BOOLEAN DEFAULT FALSE
+2. Install dependencies:
+
+```bash
+npm install
 ```
 
-### `daily_schedule`
-```sql
-task_id UUID REFERENCES task_chunks(id),
-scheduled_for DATE,
-is_completed BOOLEAN DEFAULT FALSE
+3. Create a `.env` file based on the `.env.example` file and update the database connection string.
+
+4. Start the backend server:
+
+```bash
+npm run dev
 ```
 
----
+The server will start on http://localhost:5000.
 
-## 💡 Example Use Case
+### Frontend Setup
 
-User Cathy wants to master algorithm topics:
-1. Creates parent task: "Leetcode Mastery"
-2. Adds chunks: "Binary Search", "Backtracking Basics", "Sliding Window"
-3. Sets importance:
-   - Backtracking: 0.9
-   - Binary Search: 0.6
-4. App calculates review times and daily plans
-5. Cathy reviews daily and marks progress
-6. A week later, she adds: "Arrays Practice"
-7. The system rebalances the upcoming schedule and adapts priority queue
-8. Cathy also has other tasks like "Build Side Projects" and "Mock Interviews" under her profile
+1. Open a new terminal and navigate to the frontend directory:
 
----
+```bash
+cd frontend
+```
 
-## 📈 Bonus Features (Future Ideas)
-- Custom decay tuning per user
-- Drag-and-drop task reorder UI
-- API for integrating with Notion, Google Calendar, etc.
-- AI assistant for auto-chunking and summarizing tasks
+2. Install dependencies:
 
----
+```bash
+npm install
+```
 
-## 🧪 MVP Development Stack
-- Frontend: Next.js / React
-- Backend: Supabase (PostgreSQL)
-- Scheduling Logic: Python or Node.js
-- Optional AI: OpenAI or Gemini for chunking and summarizing
+3. Start the frontend development server:
 
----
+```bash
+npm start
+```
 
-## 👋 Built With Love by Cathy Fu & Little Bot since April 16,2025
+The React app will start on http://localhost:3000.
+
+## Usage
+
+1. Create tasks that you want to learn (e.g., "Leetcode Problems", "Spanish Vocabulary")
+2. Break tasks down into smaller chunks
+3. Set importance for each chunk (how important it is for you to learn)
+4. Generate your daily schedule
+5. Review chunks according to the schedule
+6. Mark chunks as complete when reviewed or mastered when fully learned
+
+## Project Structure
+
+```
+ebbintasks/
+├── backend/              # Node.js/Express backend
+│   ├── src/
+│   │   ├── config/       # Configuration files and DB setup
+│   │   ├── controllers/  # Request handlers
+│   │   ├── models/       # Database models
+│   │   ├── routes/       # API routes
+│   │   ├── utils/        # Utility functions
+│   │   └── server.js     # Main server file
+│   └── package.json
+│
+├── frontend/             # React frontend
+│   ├── public/           # Static files
+│   ├── src/
+│   │   ├── components/   # React components
+│   │   ├── pages/        # Page components
+│   │   ├── services/     # API services
+│   │   └── App.js        # Main App component
+│   └── package.json
+│
+└── README.md
+```
+
+## How It Works
+
+EbbinTasks uses the principles of spaced repetition based on the Ebbinghaus forgetting curve to help you retain information more effectively:
+
+1. Each task chunk has a retention score that decreases over time
+2. User-defined importance determines how critical a chunk is to learn
+3. Priority is calculated by multiplying retention score by importance
+4. The system schedules reviews based on priority, ensuring you focus on what's most important
+5. As you review chunks, their retention score adjusts, spacing out reviews over time
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
